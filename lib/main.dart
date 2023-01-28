@@ -4,13 +4,15 @@ import 'package:video_player/video_player.dart';
 void main() => runApp(VideoPlayerApp());
 
 class VideoPlayerApp extends StatelessWidget {
+  const VideoPlayerApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Stage Video Quality Selector',
       home: Container(
-          padding: EdgeInsets.all(50),
+          padding: const EdgeInsets.all(50),
           color: Colors.black,
           child: StageVideoSelector()),
     );
@@ -18,48 +20,61 @@ class VideoPlayerApp extends StatelessWidget {
 }
 
 class StageVideoSelector extends StatefulWidget {
-  StageVideoSelector({Key? key}) : super(key: key);
+  const StageVideoSelector({Key? key}) : super(key: key);
 
   @override
+  // ignore: library_private_types_in_public_api
   _StageVideoSelectorState createState() => _StageVideoSelectorState();
 }
 
 class _StageVideoSelectorState extends State<StageVideoSelector> {
 
-  String _selectedQuality = '720p';
+
+  // Initializes the video streams for different qualities
   String stream360p = 'https://res.cloudinary.com/dri88yrck/video/upload/v1674902569/360_ydin5t.mp4';
   String stream480p = 'https://res.cloudinary.com/dri88yrck/video/upload/v1674902570/480_inbgl6.mp4';
   String stream1080p = 'https://res.cloudinary.com/dri88yrck/video/upload/v1674902581/1080_qb5n5g.mp4';
   String stream4kp = 'https://res.cloudinary.com/dri88yrck/video/upload/v1674902572/4k_kqhzha.webm';
   String stream8kp='https://res.cloudinary.com/dri88yrck/video/upload/v1674902572/8k_zkstrt.webm';
 
+  // Initializes a list of maps for the different video qualities
   late List<Map<String, dynamic>> _qualities;
 
+  // Initializes the video player controller and future
   late VideoPlayerController videoPlayerController;
   late Future<void> initializeVideoPlayerFuture;
+
+  // Initializes the playback time and current position
   late int playBackTime;
   late Duration currentPosition;
   
   @override
   void initState() {
+    // Populates the list of video qualities with their names, URLs and icons
     _qualities = [
       {"name": "Super Ultra HD 8K", "value": stream8kp, "icon": Icons.diamond, "text": "VIP Service"},
       {"name": "Ultra HD 4K", "value": stream4kp, "icon": Icons.diamond, "text": "VIP Service"},
       {"name": "HD 1080P", "value": stream1080p},      {"name": "Better 480P", "value": stream480p},
       {"name": "Good 360P", "value": stream360p},
     ];
+
+    // Initialize the video player controller with the initial video URL
     videoPlayerController = VideoPlayerController.network(stream8kp);
+
+    // Add a listener to the video player controller to track the current position in the video
     videoPlayerController.addListener(() {
       setState(() {
         playBackTime = videoPlayerController.value.position.inSeconds;
       });
     });
+    // Initialize the video player
     initializeVideoPlayerFuture = videoPlayerController.initialize();
     super.initState();
   }
 
   @override
   void dispose() {
+    // Dispose of the video player controller when the widget is disposed
     initializeVideoPlayerFuture;
     videoPlayerController.pause().then((_) {
       videoPlayerController.dispose();
@@ -68,17 +83,21 @@ class _StageVideoSelectorState extends State<StageVideoSelector> {
   }
 
   Future<bool> clearPrevious() async {
+    // Pause the current video before switching to a new one
     await videoPlayerController.pause();
     return true;
   }
   
   Future<void> initializePlay(String videoPath) async {
+    // Initialize the video player controller with the new video URL
     videoPlayerController = VideoPlayerController.network(videoPath);
     videoPlayerController.addListener(() {
       setState(() {
         playBackTime = videoPlayerController.value.position.inSeconds;
       });
     });
+
+    // Initialize the video player and seek to the last position before switching videos
     initializeVideoPlayerFuture = videoPlayerController.initialize().then((_) {
       videoPlayerController.seekTo(currentPosition);
       videoPlayerController.play();
@@ -86,15 +105,15 @@ class _StageVideoSelectorState extends State<StageVideoSelector> {
   }
 
   void getValuesAndPlay(String videoPath) {
+    // Save the current position before switching videos
     currentPosition = videoPlayerController.value.position;
     startPlay(videoPath);
-    print(currentPosition.toString());
   }
   
 
  Future<void> startPlay(String videoPath) async {
     setState(() {
-      initializeVideoPlayerFuture ;
+      initializeVideoPlayerFuture;
     });
     Future.delayed(const Duration(milliseconds: 20), () {
       clearPrevious().then((_) {
@@ -102,6 +121,12 @@ class _StageVideoSelectorState extends State<StageVideoSelector> {
       });
     });
   }
+
+  /* 
+  * This function is the main build function for the video player
+  * It uses a FutureBuilder to handle the initialization of the video player and displays a loading spinner while it is initializing
+  * Once the video player is initialized, it will display the video with controls at the bottom of the screen
+ */
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +152,11 @@ class _StageVideoSelectorState extends State<StageVideoSelector> {
     );
   }
 
+  /* 
+  *This function creates the control bar at the bottom of the screen
+  * It includes the play/pause button, the current time display, and the quality button
+  */
+
   Widget _buildControls() {
     return Align(
       alignment: Alignment.bottomCenter,
@@ -143,7 +173,10 @@ class _StageVideoSelectorState extends State<StageVideoSelector> {
       ),
     );
   }
-
+  /* 
+  *This function creates the play/pause button for the video
+  *It uses an icon that changes based on the current play state of the video
+  */
   Widget _buildPlayPauseButton() {
     return FloatingActionButton(
       backgroundColor: Colors.transparent,
@@ -163,6 +196,10 @@ class _StageVideoSelectorState extends State<StageVideoSelector> {
       ),
     );
   }
+  /*
+  * This function creates the current time display for the video
+  * It displays the current time in a container with a black background and white text
+  */
   Widget _buildCurrentTime() {
     return Container(
       width: 150,
@@ -186,6 +223,14 @@ class _StageVideoSelectorState extends State<StageVideoSelector> {
       ),
     );
   }
+  /// This method creates a button for selecting streaming quality. 
+  /// It uses a GestureDetector widget to handle the tap event and opens a SimpleDialog when tapped. 
+  /// The SimpleDialog displays a list of options, each represented by a SimpleDialogOption.
+  /// When an option is selected, the _selectedQuality variable is updated with the selected 
+  /// quality name and the getValuesAndPlay() method is called with the selected quality value. 
+  /// The Navigator.pop() method closes the SimpleDialog. 
+  /// The child of the GestureDetector is an Icon widget that represents the settings icon.
+
   Widget _buildQualityButton() {
     return GestureDetector(
       onTap: () {
@@ -193,12 +238,11 @@ class _StageVideoSelectorState extends State<StageVideoSelector> {
           context: context,
           builder: (BuildContext context) {
             return SimpleDialog(
-              title: Text("Choose Streaming Quality"),
+              title: const Text("Choose Streaming Quality"),
               children: _qualities.map((quality) {
                 return SimpleDialogOption(
                   onPressed: () {
                     setState(() {
-                      _selectedQuality = quality['name'];
                     });
                     getValuesAndPlay(quality['value']);
                     Navigator.pop(context);
