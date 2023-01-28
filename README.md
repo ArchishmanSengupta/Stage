@@ -1,16 +1,6 @@
-# video
+# Stage
+## This code contains Video Quality Selector for a video on Stage.in
+![logo](https://user-images.githubusercontent.com/71402528/215274207-2dc71fc1-8a75-44a1-83f5-169b785edaa2.png)
 
-A new Flutter project.
+https://user-images.githubusercontent.com/71402528/215274113-e6f81322-d4ae-41b8-b2b2-1b9230309b74.mp4
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
