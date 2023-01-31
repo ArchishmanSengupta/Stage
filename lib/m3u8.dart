@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import 'package:video_player/video_player.dart';
+
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
 
+List<String> qualityOptions = [];
+List<String> urls = [];
+
+int selectedQualityIndex = 0;
+Map<String, String> resolutionToUrl = {};
 void main() {
   runApp(const MyApp());
 }
@@ -22,7 +30,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: VideoPlayer(videoUrl: 'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8',),
+      home: VideoPlayer(
+        videoUrl:
+            'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8',
+      ),
     );
   }
 }
@@ -37,9 +48,6 @@ class VideoPlayer extends StatefulWidget {
 }
 
 class _VideoPlayerState extends State<VideoPlayer> {
-  List<String> qualityOptions = [];
-  int selectedQualityIndex = 0;
-
   @override
   void initState() {
     super.initState();
@@ -50,23 +58,24 @@ class _VideoPlayerState extends State<VideoPlayer> {
     var url = Uri.parse('https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8');
     final res = await http.get(url);
 
-    print("RES----------------------------------------------------------------------------------------->: ${res.body}");
-    print("RES--------Code----------------------------------------------------------------------------->: ${res.statusCode}");
-    
     if (res.statusCode == 200) {
       final body = res.body;
-      final lines = body.split("\n");
-    
-      print("BODY----------------------------------------------------------------------------------------->: ${body}");
-      print("LINES----------------------------------------------------------------------------------------->: ${lines}");
-    
-    
+      print("body --> $body");
+      final lines = body.split("#");
       for (String line in lines) {
-        if (line.startsWith("#EXT-X-STREAM-INF")) {
-          final quality = line.split(",")[3];
+        if (line.startsWith("EXT-X-STREAM-INF")) {
+          List<String> temp = line.split(",");
+          if (temp.length < 4) {
+            continue;
+          }
+          final quality = temp[3];
+
+          String name = line.split("\n")[1];
+          resolutionToUrl[quality] =
+              "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/$name";
+          urls.add(
+              "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/$name");
           qualityOptions.add(quality);
-    
-          print("QUALITY----------------------------------------------------------------------------------------->: ${quality}");
         }
       }
       setState(() {});
@@ -74,7 +83,6 @@ class _VideoPlayerState extends State<VideoPlayer> {
   }
 
   void _selectQuality(int index) {
-    
     setState(() {
       selectedQualityIndex = index;
     });
@@ -97,7 +105,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
               qualityOptions: qualityOptions,
               selectedQualityIndex: selectedQualityIndex,
               onSelect: (index) {
-                print("INDEX----------------------------------------------------------------------------------------->: ${index}");
+                // print(resolutionToUrl[qualityOptions[selectedQualityIndex]]!);
                 _selectQuality(index);
               },
             ),
@@ -112,16 +120,15 @@ class VideoPlayerScreen extends StatelessWidget {
   final String videoUrl;
   final int selectedQualityIndex;
 
-  VideoPlayerScreen({required this.videoUrl, required this.selectedQualityIndex});
+  VideoPlayerScreen(
+      {required this.videoUrl, required this.selectedQualityIndex});
   @override
   Widget build(BuildContext context) {
     return Container(
       child: Chewie(
         controller: ChewieController(
           videoPlayerController: VideoPlayerController.network(
-            videoUrl.substring(0, videoUrl.lastIndexOf("/") + 1) +
-              "index_${selectedQualityIndex + 1}.m3u8",
-          ),
+              resolutionToUrl[qualityOptions[selectedQualityIndex]]!),
           aspectRatio: 16 / 9,
           autoPlay: true,
           looping: true,
@@ -136,7 +143,10 @@ class QualitySelector extends StatelessWidget {
   final int selectedQualityIndex;
   final Function onSelect;
 
-  QualitySelector({required this.qualityOptions, required this.selectedQualityIndex, required this.onSelect});
+  QualitySelector(
+      {required this.qualityOptions,
+      required this.selectedQualityIndex,
+      required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
@@ -169,5 +179,3 @@ class QualitySelector extends StatelessWidget {
     );
   }
 }
-
-
