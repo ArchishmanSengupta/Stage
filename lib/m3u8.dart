@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:stage/screens/homePage.dart';
+import 'package:stage/utils/player.dart';
 import 'package:video_player/video_player.dart';
 
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
 
 void main() {
@@ -38,6 +41,7 @@ class VideoPlayer extends StatefulWidget {
 
 class _VideoPlayerState extends State<VideoPlayer> {
   List<String> qualityOptions = [];
+  List<String> qualityIncreament = [];
   int selectedQualityIndex = 0;
 
   @override
@@ -58,15 +62,31 @@ class _VideoPlayerState extends State<VideoPlayer> {
       final lines = body.split("\n");
     
       print("BODY----------------------------------------------------------------------------------------->: ${body}");
-      print("LINES----------------------------------------------------------------------------------------->: ${lines}");
-    
+
+      // SEQUENCE STREAM FOR M3U8 AT THE 5TH INDEX OF THE LIST
+      print("LINES----------------------------------------------------------------------------------------->: ${lines}, xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx {$lines.runtimeType}"); 
+
+
     
       for (String line in lines) {
         if (line.startsWith("#EXT-X-STREAM-INF")) {
           final quality = line.split(",")[3];
+
+          //TODO :
+          /*
+          "tears-of-steel-audio_eng=128002-video_eng=2200000.m3u8"
+          hls m3u8 formated increament in lines,
+
+          take the formats and switch accordingly to the video streams
+           */
+          final qualityIncreamentString = line.split(",")[4];
+          qualityIncreament.add(qualityIncreamentString);
           qualityOptions.add(quality);
     
           print("QUALITY----------------------------------------------------------------------------------------->: ${quality}");
+          print("QUALITY INCREAMENT----------------------------------------------------------------------------------------->: ${qualityIncreamentString}");
+    
+    
         }
       }
       setState(() {});
