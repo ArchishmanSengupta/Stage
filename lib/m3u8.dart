@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
-
-import 'package:video_player/video_player.dart';
-
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -10,7 +7,6 @@ import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
 
 List<String> qualityOptions = [];
-List<String> urls = [];
 
 int selectedQualityIndex = 0;
 Map<String, String> resolutionToUrl = {};
@@ -48,6 +44,10 @@ class VideoPlayer extends StatefulWidget {
 }
 
 class _VideoPlayerState extends State<VideoPlayer> {
+  final String videoUrl = 'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8';
+  final String baseUrl = 'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/';
+  late VideoPlayerController _videoPlayerController;
+
   @override
   void initState() {
     super.initState();
@@ -55,26 +55,25 @@ class _VideoPlayerState extends State<VideoPlayer> {
   }
 
   void _getVideoQuality() async {
-    var url = Uri.parse('https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8');
-    final res = await http.get(url);
+    var url = Uri.parse(videoUrl);
+    final response = await http.get(url);
 
-    if (res.statusCode == 200) {
-      final body = res.body;
-      print("body --> $body");
+    if (response.statusCode == 200) {
+      final body = response.body;
       final lines = body.split("#");
+
       for (String line in lines) {
         if (line.startsWith("EXT-X-STREAM-INF")) {
-          List<String> temp = line.split(",");
-          if (temp.length < 4) {
+          // ignore: non_constant_identifier_names
+          List<String> DynamicFormattedSubstring = line.split(",");
+          if (DynamicFormattedSubstring.length < 4) {
             continue;
           }
-          final quality = temp[3];
+          
+          final quality = DynamicFormattedSubstring[3];
+          String mergedUrl = baseUrl + line.split("\n")[1];
 
-          String name = line.split("\n")[1];
-          resolutionToUrl[quality] =
-              "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/$name";
-          urls.add(
-              "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/$name");
+          resolutionToUrl[quality] = "$mergedUrl";
           qualityOptions.add(quality);
         }
       }
@@ -105,7 +104,6 @@ class _VideoPlayerState extends State<VideoPlayer> {
               qualityOptions: qualityOptions,
               selectedQualityIndex: selectedQualityIndex,
               onSelect: (index) {
-                // print(resolutionToUrl[qualityOptions[selectedQualityIndex]]!);
                 _selectQuality(index);
               },
             ),
@@ -151,31 +149,57 @@ class QualitySelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: MediaQuery.of(context).size.height/10,
       padding: EdgeInsets.all(8.0),
       child: Row(
         children: <Widget>[
-          Text("Quality:", style: TextStyle(fontWeight: FontWeight.bold)),
+          Text("Choose Video Quality:", style: TextStyle(fontWeight: FontWeight.bold)),
           SizedBox(width: 8.0),
-          DropdownButton(
-            icon: Icon(Icons.arrow_drop_down_circle_sharp),
-            items: qualityOptions
-                .asMap()
-                .map((index, quality) => MapEntry(
-                      index,
-                      DropdownMenuItem(
-                        child: Text(quality),
-                        value: index,
-                      ),
-                    ))
-                .values
-                .toList(),
-            value: selectedQualityIndex,
-            onChanged: (index) {
-              onSelect(index);
+          InkWell(
+          onTap: (){
+            showModalBottomSheet(context: context, builder: (context){
+              return Container(
+                height: MediaQuery.of(context).size.height/3,
+                child: ListView.builder(
+                  itemCount: qualityOptions.length,
+                  itemBuilder: (context, index){
+                    return ListTile(
+                      title: Text(qualityOptions[index]),
+                      leading: selectedQualityIndex == index
+                    ? Icon(Icons.check_circle, color: Colors.blue)
+                    : SizedBox(),
+                      onTap: (){
+                        onSelect(index);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              );
+            });
             },
+            child: Container(
+              width: 220,
+              height: 30,
+              decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey, width: 1),
+              borderRadius: BorderRadius.all(Radius.circular(20)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    qualityOptions[selectedQualityIndex],
+                    style: TextStyle(color: Colors.black45),
+                  ),
+                  SizedBox(width: 10,),
+                  Icon(Icons.arrow_downward_rounded)
+                ],
+              ),
+            ),
           ),
-        ],
-      ),
-    );
-  }
+          ],
+          ),
+          );
+          }
 }
